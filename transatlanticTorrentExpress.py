@@ -93,12 +93,18 @@ def main():
   delugeScript = config['DELUGE']['script']
 
   remoteFiles = getFiles(remotePath, host, user)
-  logger.info('Remote files found: {}'.format(remoteFiles))
+  if len(remoteFiles) > 0:
+    logger.info('Remote files found: {}'.format(remoteFiles))
+  else:
+    logger.info('No remote files found')
   # print('Remote found: {}'.format(remoteFiles))
   
   localFiles = getFiles(localPath)
   # print('Local files: {}'.format(localFiles))
-  logger.info('Local files found: {}'.format(localFiles))
+  if len(localFiles > 0):
+    logger.info('Local files found: {}'.format(localFiles))
+  else:
+    logger.info('No local files found')
 
   newFiles = filesNotShared(localFiles, remoteFiles)
   if (newFiles):
@@ -110,7 +116,8 @@ def main():
 
 
   else:
-    print('No new files found')
+    # print('No new files found to travel on the great transatlantic express')
+    logger.info('No new files found to travel on the great transatlantic express')
 
 if __name__ == '__main__':
   main()
