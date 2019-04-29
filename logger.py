@@ -2,7 +2,8 @@
 
 import logging
 import os
-import requests
+import json
+import urllib.request
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(BASE_DIR, 'output.log')
@@ -37,8 +38,12 @@ class ESHandler(logging.Handler):
       '@timestamp': int(record.created*1000)
     }
 
-    resp = requests.post(indexURL, json=doc, headers={"Content-type": "application/json"})
-    return resp.content
+    payload = json.dumps(doc).encode('utf8')
+    req = urllib.request.Request(indexURL, data=payload,
+                                 headers={'content-type': 'application/json'})
+    response = urllib.request.urlopen(req)
+    response = response.read().decode('utf8')
+    return response
 
 eh = ESHandler(host='localhost')
 eh.setLevel(logging.DEBUG)
