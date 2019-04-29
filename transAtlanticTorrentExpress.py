@@ -3,6 +3,9 @@ import os, sys
 from subprocess import check_output, Popen, PIPE
 from configparser import ConfigParser
 
+# Local files
+from logger import logger
+
 def getConfig():
   print('Reading config')
   pwd = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +49,7 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
   transferedFiles = []
 
   for file in files:
+    logger.info('Moving file: ', file)
     file = os.path.join(localPath, file)
 
     if (host and user):
@@ -57,7 +61,7 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
     stdout, stderr = rsyncProcess.communicate()
 
     if stderr:
-      print('Unable', stderr)
+      logger.error('Error when rsyncing', stderr)
 
     print(stdout)
     transferedFiles.append(file)
@@ -69,6 +73,7 @@ def removeFromDeluge(execScript, files):
 
   for file in files:
     print('Removing {} from deluge'.format(file))
+    logger.info('Removing {} from deluge'.format(file))
     cmd = "{} {} rm '{}'".format(execPython, execScript, file)
 
     delugeProcess = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
@@ -77,7 +82,7 @@ def removeFromDeluge(execScript, files):
     if stderr:
       print('Deluge unable', stderr)
 
-    print('Successfully removed: ', file)
+    logger.info('Successfully removed: ', file)
 
 def main():
   config = getConfig()
@@ -95,8 +100,8 @@ def main():
 
   newFiles = filesNotShared(localFiles, remoteFiles)
   if (newFiles):
-    print('New files: {}'.format(newFiles))
-    print('Existing files: {}'.format(list(set(remoteFiles).intersection(localFiles))))
+    logger.info('New files: {}'.format(newFiles))
+    logger.info('Existing files: {}'.format(list(set(remoteFiles).intersection(localFiles))))
 
     transferedFiles = transferFiles(newFiles, localPath, remotePath, host, user)
     removeFromDeluge(delugeScript, transferedFiles)
