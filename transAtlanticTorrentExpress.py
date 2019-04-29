@@ -61,7 +61,7 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
     stdout, stderr = rsyncProcess.communicate()
 
     if stderr:
-      logger.error('Error when rsyncing', stderr)
+      logger.error('Rsync error:', stderr)
 
     print(stdout)
     transferedFiles.append(file)
@@ -80,7 +80,7 @@ def removeFromDeluge(execScript, files):
     stdout, stderr = delugeProcess.communicate()
 
     if stderr:
-      print('Deluge unable', stderr)
+      logger.error('Deluge error:', stderr)
 
     logger.info('Successfully removed: ', file)
 
