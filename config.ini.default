@@ -1,0 +1,10 @@
+[SSH]
+host=
+user=
+
+[FILES]
+remote=
+local=
+
+[DELUGE]
+script=
