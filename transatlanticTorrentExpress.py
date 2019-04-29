@@ -72,6 +72,8 @@ def removeFromDeluge(execScript, files):
   execPython = '/usr/bin/python2'
 
   for file in files:
+    file = file.split('/')[-1]
+    
     print('Removing {} from deluge'.format(file))
     logger.info('Removing {} from deluge'.format(file))
     cmd = "{} {} rm '{}'".format(execPython, execScript, file)
@@ -82,6 +84,7 @@ def removeFromDeluge(execScript, files):
     if stderr:
       logger.error('Deluge error:', stderr)
 
+    logger.info('Deluge response:', stdout)
     logger.info('Successfully removed: ', file)
 
 def main():
