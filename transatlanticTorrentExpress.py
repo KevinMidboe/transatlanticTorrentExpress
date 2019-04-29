@@ -7,7 +7,7 @@ from configparser import ConfigParser
 from logger import logger
 
 def getConfig():
-  logger.info('Reading config')
+  logger.debug('Reading config')
   pwd = os.path.dirname(os.path.abspath(__file__))
   path = os.path.join(pwd, 'config.ini')
 
@@ -18,11 +18,12 @@ def getConfig():
   config = ConfigParser()
   config.read(path)
 
-  logger.info('Sections parsed: {}'.format(config.sections()))
+  logger.debug('Sections parsed: {}'.format(config.sections()))
   return config
 
 
 def getFiles(path, host=None, user=None):
+  logger.info('Getting filenames from path: {}'.format(path))
   if (host and user):
     cmd = 'ssh {}@{} ls {}'.format(user, host, path)
   else:
@@ -61,7 +62,7 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
     if stderr:
       logger.error('Rsync error: {}'.format(stderr))
 
-    logger.info('Rsync output: {}'.format(stdout))
+    logger.debug('Rsync output: {}'.format(stdout))
     transferedFiles.append(file)
 
   return transferedFiles
@@ -81,7 +82,7 @@ def removeFromDeluge(execScript, files):
     if stderr:
       logger.error('Deluge error: {}'.format(stderr))
 
-    logger.info('Deluge output: {}'.format(stdout))
+    logger.debug('Deluge output: {}'.format(stdout))
     logger.info('Successfully removed: {}'.format(file))
 
 def main():
