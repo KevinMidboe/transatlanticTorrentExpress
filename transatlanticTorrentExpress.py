@@ -7,7 +7,7 @@ from configparser import ConfigParser
 from logger import logger
 
 def getConfig():
-  print('Reading config')
+  logger.info('Reading config')
   pwd = os.path.dirname(os.path.abspath(__file__))
   path = os.path.join(pwd, 'config.ini')
 
@@ -18,13 +18,11 @@ def getConfig():
   config = ConfigParser()
   config.read(path)
 
-  print('Sections parsed: {}'.format(config.sections()))
+  logger.info('Sections parsed: {}'.format(config.sections()))
   return config
 
 
 def getFiles(path, host=None, user=None):
-  print('Checking path: {}'.format(path))
-
   if (host and user):
     cmd = 'ssh {}@{} ls {}'.format(user, host, path)
   else:
@@ -49,7 +47,7 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
   transferedFiles = []
 
   for file in files:
-    logger.info('Moving file: ', file)
+    logger.info('Moving file: {}'.format(file))
     file = os.path.join(localPath, file)
 
     if (host and user):
@@ -61,9 +59,9 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
     stdout, stderr = rsyncProcess.communicate()
 
     if stderr:
-      logger.error('Rsync error:', stderr)
+      logger.error('Rsync error: {}'.format(stderr))
 
-    print(stdout)
+    logger.info('Rsync output: {}'.format(stdout))
     transferedFiles.append(file)
 
   return transferedFiles
@@ -73,8 +71,7 @@ def removeFromDeluge(execScript, files):
 
   for file in files:
     file = file.split('/')[-1]
-    
-    print('Removing {} from deluge'.format(file))
+
     logger.info('Removing {} from deluge'.format(file))
     cmd = "{} {} rm '{}'".format(execPython, execScript, file)
 
@@ -82,10 +79,10 @@ def removeFromDeluge(execScript, files):
     stdout, stderr = delugeProcess.communicate()
 
     if stderr:
-      logger.error('Deluge error:', stderr)
+      logger.error('Deluge error: {}'.format(stderr))
 
-    logger.info('Deluge response:', stdout)
-    logger.info('Successfully removed: ', file)
+    logger.info('Deluge output: {}'.format(stdout))
+    logger.info('Successfully removed: {}'.format(file))
 
 def main():
   config = getConfig()
@@ -96,10 +93,12 @@ def main():
   delugeScript = config['DELUGE']['script']
 
   remoteFiles = getFiles(remotePath, host, user)
+  logger.info('Remote files found: {}'.format(remoteFiles))
   # print('Remote found: {}'.format(remoteFiles))
   
   localFiles = getFiles(localPath)
   # print('Local files: {}'.format(localFiles))
+  logger.info('Local files found: {}'.format(localFiles))
 
   newFiles = filesNotShared(localFiles, remoteFiles)
   if (newFiles):
