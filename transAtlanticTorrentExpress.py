@@ -2,13 +2,17 @@
 import os, sys
 from subprocess import check_output, Popen, PIPE
 from configparser import ConfigParser
-print('test')
 
 def getConfig():
   print('Reading config')
-  config = ConfigParser()
   pwd = os.path.dirname(os.path.abspath(__file__))
   path = os.path.join(pwd, 'config.ini')
+
+  if not os.path.isfile(path):
+    print('Please fill out and rename config file. Check README for more info.')
+    exit(0)
+
+  config = ConfigParser()
   config.read(path)
 
   print('Sections parsed: {}'.format(config.sections()))
