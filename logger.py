@@ -2,6 +2,7 @@
 
 import logging
 import os
+import requests
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(BASE_DIR, 'output.log')
@@ -19,7 +20,31 @@ fh.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.ERROR)
 
+class ESHandler(logging.Handler):
+  def __init__(self, *args, **kwargs):
+    self.host = kwargs.get('host')
+    self.port = kwargs.get('port') or 9200
+
+    logging.StreamHandler.__init__(self)
+
+  def emit(self, record):
+    self.format(record)
+
+    indexURL = 'http://{}:{}/transatlantic_torrent_express/_doc'.format(self.host, self.port)
+    doc = {
+      'severity': record.levelname,
+      'message': record.message,
+      '@timestamp': int(record.created*1000)
+    }
+
+    resp = requests.post(indexURL, json=doc, headers={"Content-type": "application/json"})
+    return resp.content
+
+eh = ESHandler(host='localhost')
+eh.setLevel(logging.DEBUG)
+
 formatter = logging.Formatter('%(asctime)s %(levelname)8s | %(message)s')
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
+logger.addHandler(eh)
