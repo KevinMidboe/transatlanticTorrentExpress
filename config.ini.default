@@ -8,3 +8,7 @@ local=
 
 [DELUGE]
 script=
+
+[ELASTIC]
+host=
+port=

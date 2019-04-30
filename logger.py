@@ -5,6 +5,8 @@ import os
 import json
 import urllib.request
 
+from utils import getConfig
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_FILE = os.path.join(BASE_DIR, 'output.log')
 
@@ -45,7 +47,10 @@ class ESHandler(logging.Handler):
     response = response.read().decode('utf8')
     return response
 
-eh = ESHandler(host='localhost')
+config = getConfig()
+esHost = config['ELASTIC']['host']
+esPort = config['ELASTIC']['port']
+eh = ESHandler(host=esHost, port=esPort)
 eh.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s %(levelname)8s | %(message)s')
