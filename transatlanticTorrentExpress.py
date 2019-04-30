@@ -33,6 +33,10 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
 
   for file in files:
     logger.info('Moving file: {}'.format(file))
+    if file in getFiles(remotePath, host, user):
+      logger.info('File already exists at remote path. Skipping.')
+      continue
+
     file = os.path.join(localPath, file)
 
     if (host and user):
