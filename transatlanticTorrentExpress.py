@@ -1,26 +1,10 @@
 #!/usr/bin/python3
 import os, sys
 from subprocess import check_output, Popen, PIPE
-from configparser import ConfigParser
 
 # Local files
 from logger import logger
-
-def getConfig():
-  logger.debug('Reading config')
-  pwd = os.path.dirname(os.path.abspath(__file__))
-  path = os.path.join(pwd, 'config.ini')
-
-  if not os.path.isfile(path):
-    print('Please fill out and rename config file. Check README for more info.')
-    exit(0)
-
-  config = ConfigParser()
-  config.read(path)
-
-  logger.debug('Sections parsed: {}'.format(config.sections()))
-  return config
-
+from utils import getConfig
 
 def getFiles(path, host=None, user=None):
   logger.info('Getting filenames from path: {}'.format(path))
