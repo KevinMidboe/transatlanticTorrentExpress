@@ -90,7 +90,7 @@ def main():
   
   localFiles = getFiles(localPath)
   # print('Local files: {}'.format(localFiles))
-  if len(localFiles > 0):
+  if len(localFiles) > 0:
     logger.info('Local files found: {}'.format(localFiles))
   else:
     logger.info('No local files found')
