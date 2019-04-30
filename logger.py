@@ -40,7 +40,7 @@ class ESHandler(logging.Handler):
       'severity': record.levelname,
       'message': record.message,
       '@timestamp': int(record.created*1000),
-      'sessionID': self.sessionID
+      'sessionID': str(self.sessionID)
     }
 
     payload = json.dumps(doc).encode('utf8')
