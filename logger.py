@@ -3,6 +3,7 @@
 import logging
 import os
 import json
+import uuid
 import urllib.request
 
 from utils import getConfig
@@ -27,6 +28,7 @@ class ESHandler(logging.Handler):
   def __init__(self, *args, **kwargs):
     self.host = kwargs.get('host')
     self.port = kwargs.get('port') or 9200
+    self.sessionID = uuid.uuid4()
 
     logging.StreamHandler.__init__(self)
 
@@ -37,7 +39,8 @@ class ESHandler(logging.Handler):
     doc = {
       'severity': record.levelname,
       'message': record.message,
-      '@timestamp': int(record.created*1000)
+      '@timestamp': int(record.created*1000),
+      'sessionID': self.sessionID
     }
 
     payload = json.dumps(doc).encode('utf8')
