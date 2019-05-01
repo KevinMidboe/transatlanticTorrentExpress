@@ -9,9 +9,9 @@ from utils import getConfig
 def getFiles(path, host=None, user=None):
   logger.info('Getting filenames from path: {}'.format(path))
   if (host and user):
-    cmd = 'ssh {}@{} ls {}'.format(user, host, path)
+    cmd = "ssh {}@{} ls '{}'".format(user, host, path)
   else:
-    cmd = 'ls {}'.format(path)
+    cmd = "ls '{}'".format(path)
 
   contents = check_output(cmd, shell=True)
 
