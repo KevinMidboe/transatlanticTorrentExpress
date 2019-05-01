@@ -43,12 +43,29 @@ class ESHandler(logging.Handler):
       'sessionID': str(self.sessionID)
     }
 
+    if record.es:
+      for param in record.es.values():
+        if ': {}'.format(param) in record.message:
+          doc['message'] = record.message.replace(': {}'.format(str(param)), '')
+
+      doc = {**record.es, **doc}
+
     payload = json.dumps(doc).encode('utf8')
     req = urllib.request.Request(indexURL, data=payload,
                                  headers={'content-type': 'application/json'})
     response = urllib.request.urlopen(req)
     response = response.read().decode('utf8')
     return response
+
+class ElasticFieldParameterAdapter(logging.LoggerAdapter):
+  def __init__(self, logger, extra={}):
+    super().__init__(logger, extra)
+
+  def process(self, msg, kwargs):
+    extra = kwargs.get("extra", {})
+    extra.update({"es": kwargs.pop("es", True)})
+    kwargs["extra"] = extra
+    return (msg, kwargs)
 
 config = getConfig()
 esHost = config['ELASTIC']['host']
@@ -61,3 +78,4 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 logger.addHandler(eh)
+logger = ElasticFieldParameterAdapter(logger)
