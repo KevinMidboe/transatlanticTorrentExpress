@@ -4,6 +4,7 @@ import logging
 import os
 import json
 import uuid
+import datetime
 import urllib.request
 
 from utils import getConfig
@@ -28,6 +29,7 @@ class ESHandler(logging.Handler):
   def __init__(self, *args, **kwargs):
     self.host = kwargs.get('host')
     self.port = kwargs.get('port') or 9200
+    self.date = datetime.date.today()
     self.sessionID = uuid.uuid4()
 
     logging.StreamHandler.__init__(self)
@@ -35,7 +37,7 @@ class ESHandler(logging.Handler):
   def emit(self, record):
     self.format(record)
 
-    indexURL = 'http://{}:{}/transatlantic_torrent_express/_doc'.format(self.host, self.port)
+    indexURL = 'http://{}:{}/transatlantic_torrent_express-{}/_doc'.format(self.host, self.port, self.date.strftime('%Y.%m.%d'))
     doc = {
       'severity': record.levelname,
       'message': record.message,
