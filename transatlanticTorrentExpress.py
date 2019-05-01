@@ -61,7 +61,7 @@ def removeFromDeluge(execScript, files):
   for file in files:
     file = file.split('/')[-1]
 
-    logger.info('Removing {} from deluge'.format(file), es="filename": file)
+    logger.info('Removing {} from deluge'.format(file), es={"filename": file})
     cmd = "{} {} rm '{}'".format(execPython, execScript, file)
 
     delugeProcess = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
