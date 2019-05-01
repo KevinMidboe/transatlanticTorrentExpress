@@ -43,7 +43,7 @@ class ESHandler(logging.Handler):
       'sessionID': str(self.sessionID)
     }
 
-    if record.es:
+    if hasattr(record, 'es'):
       for param in record.es.values():
         if ': {}'.format(param) in record.message:
           doc['message'] = record.message.replace(': {}'.format(str(param)), '')
@@ -62,6 +62,8 @@ class ElasticFieldParameterAdapter(logging.LoggerAdapter):
     super().__init__(logger, extra)
 
   def process(self, msg, kwargs):
+    if kwargs == {}:
+      return (msg, kwargs)
     extra = kwargs.get("extra", {})
     extra.update({"es": kwargs.pop("es", True)})
     kwargs["extra"] = extra
