@@ -7,7 +7,7 @@ from logger import logger
 from utils import getConfig
 
 def getFiles(path, host=None, user=None):
-  logger.info('Getting filenames from path: {}'.format(path), es={'filename': path})
+  logger.info('Getting filenames from path: {}'.format(path), es={'path': path})
   if (host and user):
     cmd = "ssh {}@{} ls '{}'".format(user, host, path)
   else:
