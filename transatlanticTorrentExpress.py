@@ -32,10 +32,10 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
   transferedFiles = []
 
   for file in files:
-    logger.info('Moving file: {}'.format(file), es={'file': file})
     if file in getFiles(remotePath, host, user):
       logger.info('File already exists at remote path. Skipping.')
       continue
+    logger.info('Moving file: {}'.format(file), es={'filename': file})
 
     file = os.path.join(localPath, file)
 
