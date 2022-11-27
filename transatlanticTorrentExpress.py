@@ -1,8 +1,16 @@
 #!/usr/bin/python3
 import os, sys
+import shutil
 from subprocess import check_output, Popen, PIPE
+from datetime import timedelta
+from time import time
 
-# Local files
+try:
+  from delugeClient import Deluge
+except Exception:
+  print('Download delugeClient package using: pip3 install delugeClient-kevin')
+  sys.exit(1)
+
 from logger import logger
 from utils import getConfig, readAvgSpeedFromDisk, writeAvgSpeedToDisk
 
@@ -78,15 +86,14 @@ def getFiles(path, host=None, user=None):
     cmd = "ls '{}'".format(path)
 
   contents = check_output(cmd, shell=True)
-
-  if (contents):
+  if contents != None:
     contents = contents.decode('utf-8').split('\n')
     contents = list(filter(lambda x: len(x) > 0, contents))
 
   return contents
 
-def filesNotShared(local, remote):
-  c = set(local) - set(remote)
+def filesNotShared(remote, local):
+  c = set(remote) - set(local)
   if c == set():
     return False
   
@@ -96,15 +103,14 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
   transferedFiles = []
 
   for file in files:
-    if file in getFiles(remotePath, host, user):
+    if file in getFiles(localPath):
       logger.info('File already exists at remote path. Skipping.')
       continue
-    logger.info('Moving file: {}'.format(file), es={'filename': file})
 
     file = os.path.join(localPath, file)
 
-    if (host and user):
-      cmd = "rsync -rz '{}' {}@{}:{}".format(file, user, host, remotePath)
+    if host and user:
+      cmd = "rsync -rz {}@{}:'{}' '{}'".format(user, host, spaceEscapedFile, localPath)
     else:
       cmd = "rsync -rz '{}' {}".format(file, remotePath)
 
@@ -114,28 +120,26 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
     if stderr:
       logger.error('Rsync error: {}'.format(stderr))
 
-    logger.debug('Rsync output: {}'.format(stdout))
     transferedFiles.append(file)
 
   return transferedFiles
 
-def removeFromDeluge(execScript, files):
-  execPython = '/usr/bin/python2'
+def removeFromDeluge(files):
+  deluge = Deluge()
 
   for file in files:
     file = file.split('/')[-1]
 
     logger.info('Removing {} from deluge'.format(file), es={"filename": file})
-    cmd = "{} {} rm '{}'".format(execPython, execScript, file)
+    try:
+      response = deluge.removeByName(file, True)
+      if response == None:
+        raise Exception('No torrent with that name found')
 
-    delugeProcess = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
-    stdout, stderr = delugeProcess.communicate()
+      logger.info('Successfully removed: {}'.format(file), es={'filename': file})
 
-    if stderr:
-      logger.error('Deluge error: {}'.format(stderr))
-
-    logger.debug('Deluge output: {}'.format(stdout))
-    logger.info('Successfully removed: {}'.format(file), es={'filename': file})
+    except Exception as err:
+      logger.error('Deluge error: {}'.format(err), es={'filename': file})
 
 def main():
   config = getConfig()
@@ -143,34 +147,29 @@ def main():
   user = config['SSH']['user']
   remotePath = config['FILES']['remote']
   localPath = config['FILES']['local']
-  delugeScript = config['DELUGE']['script']
 
   remoteFiles = getFiles(remotePath, host, user)
   if len(remoteFiles) > 0:
     logger.info('Remote files found: {}'.format(remoteFiles), es={'files': remoteFiles})
   else:
     logger.info('No remote files found')
-  # print('Remote found: {}'.format(remoteFiles))
   
   localFiles = getFiles(localPath)
-  # print('Local files: {}'.format(localFiles))
   if len(localFiles) > 0:
     logger.info('Local files found: {}'.format(localFiles), es={'files': localFiles})
   else:
     logger.info('No local files found')
 
-  newFiles = filesNotShared(localFiles, remoteFiles)
-  if (newFiles):
+  newFiles = filesNotShared(remoteFiles, localFiles)
+  if newFiles:
     logger.info('New files: {}'.format(newFiles), es={'files': newFiles})
     exisitingFiles = list(set(remoteFiles).intersection(localFiles))
     logger.info('Existing files: {}'.format(exisitingFiles), es={'files': exisitingFiles})
 
     transferedFiles = transferFiles(newFiles, localPath, remotePath, host, user)
-    removeFromDeluge(delugeScript, transferedFiles)
-
+    removeFromDeluge(transferedFiles)
 
   else:
-    # print('No new files found to travel on the great transatlantic express')
     logger.info('No new files found to travel on the great transatlantic express')
 
 if __name__ == '__main__':
