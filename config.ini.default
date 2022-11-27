@@ -6,9 +6,11 @@ user=
 remote=
 local=
 
-[DELUGE]
-script=
+[LOGGER]
+CH_LEVEL=INFO
 
 [ELASTIC]
 host=
 port=
+ssl=
+api_key=

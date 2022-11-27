@@ -3,6 +3,7 @@
 import logging
 import os
 import json
+import math
 import uuid
 import datetime
 import urllib.request
@@ -28,21 +29,33 @@ ch.setLevel(logging.ERROR)
 class ESHandler(logging.Handler):
   def __init__(self, *args, **kwargs):
     self.host = kwargs.get('host')
-    self.port = kwargs.get('port') or 9200
+    self.port = kwargs.get('port')
+    self.ssl = kwargs.get('ssl') or False
+    self.apiKey = kwargs.get('apiKey')
     self.date = datetime.date.today()
     self.sessionID = uuid.uuid4()
+    self.pid = str(os.getpid())
 
     logging.StreamHandler.__init__(self)
 
   def emit(self, record):
     self.format(record)
+    indexURL = 'http://{}/transatlantic_torrent_express/_doc'.format(self.host, self.date.strftime('%Y.%m'))
+    headers = { 'Content-Type': 'application/json', 'User-Agent': 'transatlanticTorrentExpress/v0.1'}
+    if self.ssl:
+      indexURL = indexURL.replace('http', 'https')
+    if self.port:
+      indexURL = indexURL.replace(self.host, '{}:{}'.format(self.host, self.port))
 
-    indexURL = 'http://{}:{}/transatlantic_torrent_express-{}/_doc'.format(self.host, self.port, self.date.strftime('%Y.%m.%d'))
+    if self.apiKey:
+      headers['Authorization'] = 'ApiKey {}'.format(self.apiKey)
+
     doc = {
       'severity': record.levelname,
       'message': record.message,
-      '@timestamp': int(record.created*1000),
-      'sessionID': str(self.sessionID)
+      '@timestamp': math.trunc(record.created*1000),
+      'sessionID': str(self.sessionID),
+      'pid': self.pid
     }
 
     if hasattr(record, 'es'):
@@ -53,11 +66,15 @@ class ESHandler(logging.Handler):
       doc = {**record.es, **doc}
 
     payload = json.dumps(doc).encode('utf8')
-    req = urllib.request.Request(indexURL, data=payload,
-                                 headers={'content-type': 'application/json'})
-    response = urllib.request.urlopen(req)
-    response = response.read().decode('utf8')
-    return response
+    req = urllib.request.Request(indexURL, data=payload, headers=headers)
+
+    try:
+        response = urllib.request.urlopen(req)
+        response = response.read().decode('utf8')
+        return response
+    except urllib.error.HTTPError as e:
+        print('Unable to reach elastic, error:', e)
+        return asdf
 
 class ElasticFieldParameterAdapter(logging.LoggerAdapter):
   def __init__(self, logger, extra={}):
@@ -74,7 +91,9 @@ class ElasticFieldParameterAdapter(logging.LoggerAdapter):
 config = getConfig()
 esHost = config['ELASTIC']['host']
 esPort = config['ELASTIC']['port']
-eh = ESHandler(host=esHost, port=esPort)
+esSSL = config['ELASTIC']['ssl']
+esApiKey = config['ELASTIC']['api_key']
+eh = ESHandler(host=esHost, port=esPort, ssl=esSSL, apiKey=esApiKey)
 eh.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s %(levelname)8s | %(message)s')
