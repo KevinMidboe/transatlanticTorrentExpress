@@ -30,9 +30,15 @@ user=
 remote=
 local=
 
+[LOGGER]
+CH_LEVEL=INFO
+
 [ELASTIC]
 host=
 port=
+ssl=
+api_key=
+
 ```
 
 ## Run

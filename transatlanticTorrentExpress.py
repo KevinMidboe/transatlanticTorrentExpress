@@ -107,18 +107,63 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
       logger.info('File already exists at remote path. Skipping.')
       continue
 
-    file = os.path.join(localPath, file)
+    remoteFile = os.path.join(remotePath, file)
+    fileSize = fileSizeByPath(remoteFile)
+    fileSizeBytes = fileSizeInBytes(fileSize)
+
+    logger.info('Moving file: {}'.format(file), es={'filename': file,
+                                                    'filesize': fileSize,
+                                                    'bytes': fileSizeBytes})
+
+    file = os.path.join(remotePath, file)
+    spaceEscapedFile = file.replace(' ', '\\ ')
 
     if host and user:
       cmd = "rsync -rz {}@{}:'{}' '{}'".format(user, host, spaceEscapedFile, localPath)
     else:
-      cmd = "rsync -rz '{}' {}".format(file, remotePath)
+      cmd = "rsync -rz '{}' '{}'".format(spaceEscapedFile, localPath)
+
+    estimatedTransferSpeed = estimateFileTransferTime(fileSize, file)
+    start = time()
 
     rsyncProcess = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
     stdout, stderr = rsyncProcess.communicate()
 
     if stderr:
-      logger.error('Rsync error: {}'.format(stderr))
+      stderr = stderr.decode('utf-8')
+      logger.error('Rsync error', es={'filename':file, 'output':stderr})
+
+    stdout = stdout.decode('utf-8')
+    logger.debug('Rsync output', es={'filename': file, 'output': stdout})
+
+    global LAST_FILE_TRANSFER_SPEED,TRANSFER_SPEED_UNIT
+    transferTime = int(time() - start)
+    if transferTime == 0:
+      transferTime = 1
+    calculatedTransferSpeed = int(fileSizeBytes / 1000 / 1000 * 8) / transferTime
+
+    if calculatedTransferSpeed / estimatedTransferSpeed < 10:
+      transferSpeed = calculatedTransferSpeed
+      logger.info('Actual recorded transfer time', es={'filename': file,
+                                                      'filesize': fileSize,
+                                                       'bytes': fileSizeBytes,
+                                                       'transferTime': str(timedelta(seconds=transferTime)),
+                                                       'transferSpeed': transferSpeed,
+                                                       'transferSpeedUnit': TRANSFER_SPEED_UNIT,
+                                                       'seconds': transferTime})
+    else:
+     transferSpeed = LAST_FILE_TRANSFER_SPEED
+     logger.warning('Fishy transferspeed, using previous speed calculation', es={'filename': file,
+                    'filesize': fileSize, 'bytes': fileSizeBytes,'transferTime': str(timedelta(seconds=transferTime)),
+                    'transferSpeed': calculatedTransferSpeed, 'transferSpeedUnit': TRANSFER_SPEED_UNIT, 'seconds': transferTime})
+
+    if LAST_FILE_TRANSFER_SPEED:
+      # Calculate to average of all transfers this instance
+      LAST_FILE_TRANSFER_SPEED = (LAST_FILE_TRANSFER_SPEED + transferSpeed) / 2
+    else:
+      LAST_FILE_TRANSFER_SPEED = transferSpeed
+
+    writeAvgSpeedToDisk(LAST_FILE_TRANSFER_SPEED)
 
     transferedFiles.append(file)
 

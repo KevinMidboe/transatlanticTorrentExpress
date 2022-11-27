@@ -1,6 +1,15 @@
 #!/bin/usr/python3
 import os
-from configparser import ConfigParser
+from configparser import RawConfigParser, NoOptionError
+
+pwd = os.path.dirname(os.path.abspath(__file__))
+
+class NoneOptionConfigParser(RawConfigParser):
+  def get(self, section, option):
+    try:
+      return RawConfigParser.get(self, section, option)
+    except NoOptionError:
+      return None
 
 def getConfig():
   # logger.debug('Reading config')
@@ -11,7 +20,7 @@ def getConfig():
     print('Please fill out and rename config file. Check README for more info.')
     exit(0)
 
-  config = ConfigParser()
+  config = NoneOptionConfigParser()
   config.read(path)
 
   # logger.debug('Sections parsed: {}'.format(config.sections()))
