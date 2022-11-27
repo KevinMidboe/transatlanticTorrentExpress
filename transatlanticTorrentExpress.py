@@ -4,7 +4,71 @@ from subprocess import check_output, Popen, PIPE
 
 # Local files
 from logger import logger
-from utils import getConfig
+from utils import getConfig, readAvgSpeedFromDisk, writeAvgSpeedToDisk
+
+ESTIMATED_TRANSFER_SPEED=readAvgSpeedFromDisk()
+TRANSFER_SPEED_UNIT="Mb/s"
+LAST_FILE_TRANSFER_SPEED=None
+
+def fileSizeByPath(path):
+    filename = path.split('/')[-1]
+    config = getConfig()
+    host = config['SSH']['host']
+    user = config['SSH']['user']
+    remotePath = config['FILES']['remote']
+
+    diskUsageCmd = 'du -hs'
+    if (remotePath in path):
+      cmd = 'ssh {}@{} {} "\'{}\'"'.format(user, host, diskUsageCmd, path)
+    else:
+      cmd = '{} "{}"'.format(diskUsageCmd, path)
+
+    diskusageOutput = check_output(cmd, shell=True)
+
+    diskusageOutput = diskusageOutput.decode('utf-8').split('\t')
+    return diskusageOutput[0] + 'B'
+
+def fileSizeInBytes(fileSize, blockSize=1024):
+  try:
+    if fileSize[-2] == 'G':
+      fileSizeInBytes = float(fileSize[:-2]) * 1024 * 1024 * 1024
+    elif fileSize[-2] == 'M':
+      fileSizeInBytes = float(fileSize[:-2]) * 1024 * 1024
+    elif fileSize[-2] == 'K':
+      fileSizeInBytes = float(fileSize[:-2]) * 1024
+  except:
+    logger.error('Filesize to float. Filesize:', es={'output': fileSize})
+    return
+
+  return fileSizeInBytes
+
+def estimateFileTransferTime(fileSize, filename):
+    global ESTIMATED_TRANSFER_SPEED,TRANSFER_SPEED_UNIT,LAST_FILE_TRANSFER_SPEED
+
+    fileSizeBytes = fileSizeInBytes(fileSize)
+    if fileSizeBytes == None:
+      logger.info('Unable to calculate transfer time for file', es={'filename': filename})
+      return
+
+    if (LAST_FILE_TRANSFER_SPEED):
+      estimatedTransferSpeed = LAST_FILE_TRANSFER_SPEED
+    else:
+      estimatedTransferSpeed = ESTIMATED_TRANSFER_SPEED
+      logger.debug('Guessing transfer speed with static speed variable', es={'transferSpeed': ESTIMATED_TRANSFER_SPEED,
+                                                                            'transferSpeedUnit': TRANSFER_SPEED_UNIT})
+
+    elapsedTimeInSeconds = (fileSizeBytes / 1000 / 1000 * 8) / estimatedTransferSpeed
+    estimatedTransferTime = str(timedelta(seconds=elapsedTimeInSeconds)).split('.')[0]
+
+    # trying to find the speed we average transfer at
+    logger.info('Estimated transfer time'.format(estimatedTransferTime), es={'filename': filename,
+                                                                             'filesize': fileSize,
+                                                                             'bytes': fileSizeBytes,
+                                                                             'seconds': elapsedTimeInSeconds,
+                                                                             'transferTime': estimatedTransferTime,
+                                                                             'transferSpeed': estimatedTransferSpeed,
+                                                                             'transferSpeedUnit': TRANSFER_SPEED_UNIT})
+    return estimatedTransferSpeed
 
 def getFiles(path, host=None, user=None):
   logger.info('Getting filenames from path: {}'.format(path), es={'path': path})

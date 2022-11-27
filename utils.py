@@ -16,3 +16,22 @@ def getConfig():
 
   # logger.debug('Sections parsed: {}'.format(config.sections()))
   return config
+
+def writeAvgSpeedToDisk(speed):
+  path = os.path.join(pwd, '.avgspeed.txt')
+
+  with open(path, 'w') as f:
+    f.write(str(int(speed)))
+    f.close()
+
+def readAvgSpeedFromDisk():
+  path = os.path.join(pwd, '.avgspeed.txt')
+
+  with open(path, 'r') as f:
+    data = f.readline()
+    f.close()
+
+  if data == '':
+    data = '1'
+
+  return int(data)
