@@ -79,7 +79,7 @@ def estimateFileTransferTime(fileSize, filename):
     return estimatedTransferSpeed
 
 def getFiles(path, host=None, user=None):
-  logger.info('Getting filenames from path: {}'.format(path), es={'path': path})
+  logger.debug('Getting filenames from path: {}'.format(path), es={'path': path})
   if (host and user):
     cmd = "ssh {}@{} ls '{}'".format(user, host, path)
   else:
@@ -104,7 +104,7 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
 
   for file in files:
     if file in getFiles(localPath):
-      logger.info('File already exists at remote path. Skipping.')
+      logger.debug('File already exists at remote path. Skipping.')
       continue
 
     remoteFile = os.path.join(remotePath, file)
@@ -195,27 +195,25 @@ def main():
 
   remoteFiles = getFiles(remotePath, host, user)
   if len(remoteFiles) > 0:
-    logger.info('Remote files found: {}'.format(remoteFiles), es={'files': remoteFiles})
+    logger.debug('Remote files found: {}'.format(remoteFiles), es={'files': remoteFiles})
   else:
-    logger.info('No remote files found')
+    logger.debug('No remote files found')
   
   localFiles = getFiles(localPath)
   if len(localFiles) > 0:
-    logger.info('Local files found: {}'.format(localFiles), es={'files': localFiles})
+    logger.debug('Local files found: {}'.format(localFiles), es={'files': localFiles})
   else:
-    logger.info('No local files found')
+    logger.debug('No local files found')
 
   newFiles = filesNotShared(remoteFiles, localFiles)
   if newFiles:
     logger.info('New files: {}'.format(newFiles), es={'files': newFiles})
-    exisitingFiles = list(set(remoteFiles).intersection(localFiles))
-    logger.info('Existing files: {}'.format(exisitingFiles), es={'files': exisitingFiles})
 
     transferedFiles = transferFiles(newFiles, localPath, remotePath, host, user)
     removeFromDeluge(transferedFiles)
 
   else:
-    logger.info('No new files found to travel on the great transatlantic express')
+    logger.debug('No new files found to travel on the great transatlantic express')
 
 if __name__ == '__main__':
   main()
