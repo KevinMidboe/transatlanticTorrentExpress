@@ -38,7 +38,7 @@ def writeAvgSpeedToDisk(speed):
   path = os.path.join(pwd, '.avgspeed.txt')
 
   with open(path, 'w') as f:
-    f.write(str(int(speed)))
+    f.write(str(int(speed or 100)))
     f.close()
 
 def readAvgSpeedFromDisk():
