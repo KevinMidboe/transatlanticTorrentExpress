@@ -12,7 +12,7 @@ except Exception:
   sys.exit(1)
 
 from logger import logger
-from utils import getConfig, readAvgSpeedFromDisk, writeAvgSpeedToDisk
+from utils import getConfig, readAvgSpeedFromDisk, writeAvgSpeedToDisk, VIDEO_EXTENSIONS
 
 ESTIMATED_TRANSFER_SPEED=readAvgSpeedFromDisk()
 TRANSFER_SPEED_UNIT="Mb/s"
@@ -118,8 +118,16 @@ def transferFiles(files, localPath, remotePath, host=None, user=None):
     file = os.path.join(remotePath, file)
     spaceEscapedFile = file.replace(' ', '\\ ')
 
+    # check if file is folder-less, if so create folder and update localPath
+    folderedLocalPath = None
+    filename, fileExtension = os.path.splitext(file)
+    if fileExtension in VIDEO_EXTENSIONS:
+      folderedLocalPath = os.path.join(localPath, filename)
+      os.makedirs(folderedLocalPath)
+
+    # Build rsync command
     if host and user:
-      cmd = "rsync -rz {}@{}:'{}' '{}'".format(user, host, spaceEscapedFile, localPath)
+      cmd = "rsync -rz {}@{}:'{}' '{}'".format(user, host, spaceEscapedFile, folderedLocalPath or localPath)
     else:
       cmd = "rsync -rz '{}' '{}'".format(spaceEscapedFile, localPath)
 
