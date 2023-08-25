@@ -1,15 +1,17 @@
-[SSH]
+[SATELLITE]
+path=
 host=
 user=
+remove=True
 
-[FILES]
-remote=
-local=
+[LOCAL]
+path=
 
 [LOGGER]
 CH_LEVEL=INFO
 
 [ELASTIC]
+enabled=False
 host=
 port=
 ssl=

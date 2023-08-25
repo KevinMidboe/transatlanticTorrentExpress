@@ -21,28 +21,8 @@ Create copy of config and edit following values:
 cp config.ini.default config.ini
 ```
 
-```ini
-[SSH]
-host=
-user=
-
-[FILES]
-remote=
-local=
-
-[LOGGER]
-CH_LEVEL=INFO
-
-[ELASTIC]
-host=
-port=
-ssl=
-api_key=
-
-```
-
 ## Run
 
 ```bash
-python3 src/transatlanticTorrentExpress.py
+python3 transatlanticTorrentExpress.py
 ```
