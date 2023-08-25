@@ -48,7 +48,7 @@ class File():
     cmd = "du -hs '{}'".format(filePath)
 
     if self.system.remote:
-      cmd = 'ssh {}@{} {}'.format(self.system.user, self.system.path, cmd)
+      cmd = 'ssh {}@{} {}'.format(self.system.user, self.system.host, cmd)
     
     diskusageOutput = check_output(cmd, shell=True)
 
