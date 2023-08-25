@@ -45,7 +45,7 @@ class File():
 
   def fileSize(self):
     filePath = self.system.buildFilePath(self)
-    cmd = "du -hs '{}'".format(filePath)
+    cmd = "du -hs '{}'".format(filePath.replace(' ', '\\ '))
 
     if self.system.remote:
       cmd = 'ssh {}@{} {}'.format(self.system.user, self.system.host, cmd)
