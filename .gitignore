@@ -1,5 +1,6 @@
 # Project config file
 config.ini
+.avgspeed.txt
 
 
 # Byte-compiled / optimized / DLL files
