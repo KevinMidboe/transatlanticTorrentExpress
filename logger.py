@@ -59,6 +59,10 @@ class ESHandler(logging.Handler):
     }
 
     if hasattr(record, 'es'):
+      for key in record.es.keys():
+        if key == 'files':
+          record.es[key] = [ file.__repr__() for file in record.es[key] ]
+
       for param in record.es.values():
         if ': {}'.format(param) in record.message:
           doc['message'] = record.message.replace(': {}'.format(str(param)), '')
