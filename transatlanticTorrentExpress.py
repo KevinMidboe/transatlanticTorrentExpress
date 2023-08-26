@@ -265,7 +265,7 @@ def main():
 
   satelliteSystem = System(remotePath, host, user)
   localSystem = System(localPath)
-  downloadClient = DownloadClient(remove)
+  downloadClient = DownloadClient(remove == 'True')
 
   satelliteSystem.getFiles()
   localSystem.getFiles()
