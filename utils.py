@@ -4,6 +4,7 @@ from configparser import RawConfigParser, NoOptionError
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
+AVG_SPEED_FILE = '.avgspeed.txt'
 VIDEO_EXTENSIONS = ('.3g2', '.3gp', '.3gp2', '.3gpp', '.60d', '.ajp', '.asf', '.asx', '.avchd', '.avi', '.bik',
                     '.bix', '.box', '.cam', '.dat', '.divx', '.dmf', '.dv', '.dvr-ms', '.evo', '.flc', '.fli',
                     '.flic', '.flv', '.flx', '.gvi', '.gvp', '.h264', '.m1v', '.m2p', '.m2v', '.m4e',
@@ -35,20 +36,23 @@ def getConfig():
   return config
 
 def writeAvgSpeedToDisk(speed):
-  path = os.path.join(pwd, '.avgspeed.txt')
+  path = os.path.join(pwd, AVG_SPEED_FILE)
 
   with open(path, 'w') as f:
-    f.write(str(int(speed or 100)))
+    f.write(str(int(speed)))
     f.close()
 
 def readAvgSpeedFromDisk():
-  path = os.path.join(pwd, '.avgspeed.txt')
+  path = os.path.join(pwd, AVG_SPEED_FILE)
 
   with open(path, 'r') as f:
     data = f.readline()
     f.close()
 
-  if data == '':
-    data = '1'
+  speed = None
+  try:
+    speed = int(data)
+  except:
+    pass
 
-  return int(data)
+  return speed

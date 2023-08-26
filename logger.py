@@ -59,6 +59,10 @@ class ESHandler(logging.Handler):
     }
 
     if hasattr(record, 'es'):
+      for key in record.es.keys():
+        if key == 'files':
+          record.es[key] = [ file.__repr__() for file in record.es[key] ]
+
       for param in record.es.values():
         if ': {}'.format(param) in record.message:
           doc['message'] = record.message.replace(': {}'.format(str(param)), '')
@@ -74,7 +78,7 @@ class ESHandler(logging.Handler):
         return response
     except urllib.error.HTTPError as e:
         print('Unable to reach elastic, error:', e)
-        return asdf
+        return
 
 class ElasticFieldParameterAdapter(logging.LoggerAdapter):
   def __init__(self, logger, extra={}):
@@ -93,12 +97,15 @@ esHost = config['ELASTIC']['host']
 esPort = config['ELASTIC']['port']
 esSSL = config['ELASTIC']['ssl']
 esApiKey = config['ELASTIC']['api_key']
-eh = ESHandler(host=esHost, port=esPort, ssl=esSSL, apiKey=esApiKey)
-eh.setLevel(logging.DEBUG)
+esEnabled = config['ELASTIC']['enabled']
+if esEnabled == 'True':
+  eh = ESHandler(host=esHost, port=esPort, ssl=esSSL, apiKey=esApiKey)
+  eh.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(asctime)s %(levelname)8s | %(message)s')
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
-logger.addHandler(eh)
+if esEnabled == 'True':
+  logger.addHandler(eh)
 logger = ElasticFieldParameterAdapter(logger)
