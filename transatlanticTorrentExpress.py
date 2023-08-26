@@ -45,10 +45,10 @@ class File():
 
   def fileSize(self):
     filePath = self.system.buildFilePath(self)
-    cmd = "du -hs '{}'".format(filePath.replace(' ', '\\ '))
+    cmd = "du -hs '{}'".format(filePath)
 
     if self.system.remote:
-      cmd = 'ssh {}@{} {}'.format(self.system.user, self.system.host, cmd)
+      cmd = 'ssh {}@{} "{}"'.format(self.system.user, self.system.host, cmd)
     
     diskusageOutput = check_output(cmd, shell=True)
 
